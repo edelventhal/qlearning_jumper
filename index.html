@@ -1,0 +1,60 @@
+<html>
+<head>
+    <title>Baby Mario Learns to Jump -- Simple Q Learner</title>
+    
+    <script type="text/javascript" src="types.js"></script>
+    <script type="text/javascript" src="gameloop.js"></script>
+    <script type="text/javascript" src="gameui.js"></script>
+    <script type="text/javascript" src="panel.js"></script>
+    <script type="text/javascript" src="jumper.js"></script>
+    <script type="text/javascript" src="qlearner.js"></script>
+</head>
+<body>
+    <canvas id="gameCanvas" width="500" height="500"></canvas>
+    
+    <table>
+        <tr>
+            <td><input id="stopStartButton" type="button" onclick="document.getElementById('stopStartButton').value=Panel.startStop()?'Stop':'Start';" value="Stop"/></td>
+            <td><input id="dataButton" type="button" onclick="QLearner.writeData()" value="Save Data"/></td>
+            <td><input id="skipButton" type="button" onclick="Panel.skip()" value="Skip 1000000 Frames"/></td>
+            <td><input id="randomizeBlocks" type="button" onclick="Panel.reset()" value="Randomize Blocks"/></td>
+        </tr>
+    </table>
+    
+    <table>
+        <tr>
+            <td>Goals:</td><td><div id="goalsDiv"></td>
+            <td>Iterations:</td><td><div id="iterationsDiv"></td>
+            <td>Reward:</td><td><div id="rewardDiv"></td>
+            <td>Last Jump Random?</td><td><div id="randomDiv"></td>
+        </tr>
+    </table>
+    
+    <table>
+        <tr>
+            <td>Friction:</td><td><input id="frictionField" type="text" onchange="updateFriction()"/></td>
+            <td>Air friction:</td><td><input id="airFrictionField" type="text" onchange="updateAirFriction()"/></td>
+            <td>Wind:</td><td><input id="windField" type="text" onchange="updateWind()"/></td>
+            <td>Gravity:</td><td><input id="gravityField" type="text" onchange="updateGravity()"/></td>
+        </tr>
+        <tr>
+            <td>Beta:</td><td><input id="betaField" type="text" onchange="updateBeta()"/></td>
+            <td>Gamma:</td><td><input id="gammaField" type="text" onchange="updateGamma()"/></td>
+            <td>Epsilon:</td><td><input id="epsilonField" type="text" onchange="updateEpsilon()"/></td>
+            <td>Tau:</td><td><input id="tauField" type="text" onchange="updateTau()"/></td>
+        </tr>
+    </table>
+
+    <script type="text/javascript">
+        GameLoop.init();
+        QLearner.init();
+        Panel.init( function() {Panel.startStop();} );
+        GameUI.init();
+        
+        GameLoop.listeners.push( Panel );
+        GameLoop.listeners.push( GameUI );
+        
+        
+    </script>
+</body>
+</html>
