@@ -17,7 +17,7 @@ You can have it iterate multiple times to learn a whole lot at once. Every 1000 
 
 I made this thing in college years ago and just ported it to JS because it's cute, so don't judge. It really isn't great.
 
-There are also variables like wind and such that I added in, for whatever reason. They don't really make any sense to have since they're not represented in the state space, so the AI can't possibly respond to them unless they remain constant. So... why have them? ¯\\_(ツ)_/¯
+There are also variables like wind and such that I added in, for whatever reason. They don't really make any sense to have since they're not represented in the state space, so the AI can't possibly respond to them unless they remain constant. So... why have them? ¯\\\_(ツ)\_/¯
 
 #### Possible improvements
 
