@@ -1,29 +1,39 @@
 let QLearner =
 {
     MAX_JUMP: 50,
+    TIME_WEIGHT_DIVISOR: 300, //we divide the number of iterations by this amount and multiply it by the penalty, or its inverse by the reward
+    
     epsilon: 0.3, //The chance to explore, basically means ignoring the best value
     beta: 0.9, //The amount of the old value that remains maintained
     gamma: 0.99, //The amount that the best new value is factored in
+    
+    
      //platform X by platform Y by jumpVelX by jumpVelY
     qValues: null,
+    //a dictionary of the best results where the string "x,y" is the key for an obj with  { "x": jumpVelX, "y": jumpVelY, "bestVal": qRewardValue }
+    qValuesLookup: {},
     totalReward: 0.0,
     lastJump: {x:0,y:0},
     lastDist: {x:0,y:0},
     lastJumpWasRandom: false,
+    timeJumped: 0,
     
     init: function()
     {
-        this.qValues = new Array4D( Panel.NUM_PLATFORMS_X * 2 + 3, Panel.NUM_PLATFORMS_Y * 2 + 3, this.MAX_JUMP * 2 + 10, this.MAX_JUMP * 2 + 10 );
+        this.qValues = new ArrayND( Panel.NUM_PLATFORMS_X * 2 + 3,
+                                    Panel.NUM_PLATFORMS_Y * 2 + 3,
+                                    this.MAX_JUMP * 2 + 10,
+                                    this.MAX_JUMP * 2 + 10 );
         //I could avoid this by doing a smarter check later (coerce undefined to 0)
         this.qValues.fill( 0 );
     },
     
     /**
      * The update method is called every tick by the main loop, and performs the following:
-     * 1) Choose the next action from the old LunarLander info
+     * 1) Choose the next action from the old Jumper info
      * 2) Update the lander by choosing the best action, and set its new info
      */
-    jump: function( jumper, goal )
+    jump: function( jumper, goal, time )
     {
         let sx = Math.floor( jumper.x / Panel.PLATFORM_WIDTH );
         let sy = Math.floor( jumper.y / Panel.PLATFORM_HEIGHT );
@@ -37,6 +47,8 @@ let QLearner =
         this.lastDist.x = dist.x;
         this.lastDist.y = dist.y;
         jumper.jump( jumpVel.x, jumpVel.y );
+        
+        this.timeJumped = time;
     },
 
     /**
@@ -45,9 +57,9 @@ let QLearner =
      * @param j
      * @param goal
      */
-    conclude: function( jumper, goal, successful )
+    conclude: function( jumper, goal, successful, time )
     {
-        let reward = this.getReward( jumper, goal, successful );
+        let reward = this.getReward( jumper, goal, successful, time - this.timeJumped );
         this.totalReward += reward;
         let sx = Math.floor( jumper.x / Panel.PLATFORM_WIDTH );
         let sy = Math.floor( jumper.y / Panel.PLATFORM_HEIGHT );
@@ -58,20 +70,24 @@ let QLearner =
     },
     
     /**
-     * The function that decides exactly how much to reward for the LunarLander's
+     * The function that decides exactly how much to reward for the Jumper's
      * current state. 
-     * @param l   The LunarLander
+     * @param l   The Jumper
      * @return   The reward it deserves for its current state
      */
-    getReward: function( jumper, goal, successful )
+    getReward: function( jumper, goal, successful, timeCost )
     {
+        let t = timeCost / this.TIME_WEIGHT_DIVISOR;
+        t = Math.min( t, 1 );
+        t = 0;
+        
         //If the jumper landed on the goal, add to the reward. If the jumper died,
         //knock off some of the reward. Simple.
         if ( successful )
         {
-            return 1.0;
+            return 1.0 + ( 1.0 - t );
         }
-        return -2.0;
+        return -2.0 - t;
     },
     
     /**
@@ -91,6 +107,12 @@ let QLearner =
         let newQValue = oldReward * this.beta + (1 - this.beta) * (reward + this.gamma * newReward);
         
         this.qValues.set(this.lastDist.x, this.lastDist.y, this.lastJump.x + this.MAX_JUMP, this.lastJump.y + this.MAX_JUMP, newQValue);
+        
+        let lookupKey = this.lastDist.x + "," + this.lastDist.y;
+        if ( this.qValuesLookup[ lookupKey ] === undefined || newQValue > this.qValuesLookup[ lookupKey ].bestVal )
+        {
+            this.qValuesLookup[ lookupKey ] = { x: this.lastJump.x + this.MAX_JUMP, y: this.lastJump.y + this.MAX_JUMP, bestVal: newQValue };
+        }
     },
     
     /**
@@ -106,32 +128,17 @@ let QLearner =
         let best = {x:0,y:0};
         let shouldUseRandom = Math.random() <= this.epsilon;
         let randomOptions = [];
+        let lookupObj = this.qValuesLookup[ x + "," + y ];
         
         if ( !shouldUseRandom )
         {
-            let bestVal = -99999999;
-            //this step is absurdely slow. could we have a lookup table instead?
-            for (let i = 0; i < this.qValues.sizeZ; i++)
+            //use the lookup table if we have a positive result in there
+            if ( lookupObj !== undefined && lookupObj.bestVal > 0 )
             {
-                for (let j = 0; j < this.qValues.sizeW; j++)
-                {
-                    let val = this.qValues.get(x, y, i, j );
-                    if ( val > bestVal )
-                    {
-                        best.x = i;
-                        best.y = j;
-                        bestVal = val;
-                    }
-                    
-                    if ( val === 0.0 )
-                    {
-                        randomOptions.push( { x: i, y: j } );
-                    }
-                }
+                best.x = lookupObj.x;
+                best.y = lookupObj.y;
             }
-            
-            //if we have no succeses yet, just use a random result to speed up learning
-            if ( bestVal === 0.0 )
+            else
             {
                 shouldUseRandom = true;
             }
@@ -162,17 +169,12 @@ let QLearner =
     bestJump: function( x, y )
     {
         let best = {x:0,y:0};
+        let lookupObj = this.qValuesLookup[ x + "," + y ];
         
-        for (let i = 0; i < this.qValues.sizeZ; i++)
+        if ( lookupObj )
         {
-            for (let j = 0; j < this.qValues.sizeW; j++)
-            {
-                if ( this.qValues.get(x, y, i, j ) > this.qValues.get(x, y, best.x, best.y ) )
-                {
-                    best.x = i;
-                    best.y = j;
-                }
-            }
+            best.x = lookupObj.x;
+            best.y = lookupObj.y;
         }
         
         return best;
@@ -180,18 +182,18 @@ let QLearner =
     
     bestQValue: function( x, y )
     {
-        if ( x >= this.qValues.sizeX )
+        if ( x >= this.qValues.sizes[0] )
         {
-            x = this.qValues.sizeX - 1;
+            x = this.qValues.sizes[0] - 1;
         }
         else if ( x < 0 )
         {
             x = 0;
         }
         
-        if ( y >= this.qValues.sizeY )
+        if ( y >= this.qValues.sizes[1] )
         {
-            y = this.qValues.sizeY - 1;
+            y = this.qValues.sizes[1] - 1;
         }
         else if ( y < 0 )
         {

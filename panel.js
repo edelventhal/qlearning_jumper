@@ -150,11 +150,11 @@ let Panel =
         {
             if ( !this.jumper.isJumping )
             {
-                QLearner.jump( this.jumper, this.goal );
+                QLearner.jump( this.jumper, this.goal, this.iterations );
             }
             else if ( this.jumper.isJumping && this.jumper.velocityX === 0 && this.jumper.velocityY === 0 )
             {
-                QLearner.conclude( this.jumper, this.goal, false );
+                QLearner.conclude( this.jumper, this.goal, false, this.iterations );
                 this.jumper.reset( this.start.x + this.PLATFORM_WIDTH / 2 - this.jumper.width / 2, this.start.y - this.jumper.height ); //this.reset();
             }
             this.jumper.touchGround();
@@ -164,7 +164,7 @@ let Panel =
             if ( this.jumper.velocityX === 0 )
             {
                 this.goalsReached++;
-                QLearner.conclude( this.jumper, this.goal, true );
+                QLearner.conclude( this.jumper, this.goal, true, this.iterations );
                 this.jumper.reset( this.start.x + this.PLATFORM_WIDTH / 2 - this.jumper.width / 2, this.start.y - this.jumper.height ); //this.reset();
             }
             this.jumper.touchGround();
@@ -176,7 +176,7 @@ let Panel =
     
         if ( this.jumper.y > this.HEIGHT || this.jumper.x < 0 || this.jumper.x > this.WIDTH )
         {
-            QLearner.conclude( this.jumper, this.goal, false );
+            QLearner.conclude( this.jumper, this.goal, false, this.iterations );
             this.jumper.reset( this.start.x + this.PLATFORM_WIDTH / 2 - this.jumper.width / 2, this.start.y - this.jumper.height );
         }
     

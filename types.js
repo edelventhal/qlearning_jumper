@@ -18,47 +18,68 @@ let Rectangle = function( x, y, width, height )
     }
 };
 
-let Array4D = function( sizeX, sizeY, sizeZ, sizeW, defaultFillValue )
+//n-dimensional array, no bounds checking
+let ArrayND = function( sizes, defaultFillValue )
 {
     this.arr = {};
-    this.sizeX = sizeX;
-    this.sizeY = sizeY;
-    this.sizeZ = sizeZ;
-    this.sizeW = sizeW;
+    this.sizes = sizes;
     
-    this.findIndex = function( x, y, z, w )
+    //provide coordinates as arguments
+    this.findIndex = function()
     {
-        return x * sizeY * sizeZ * sizeW +
-               y * sizeZ * sizeW +
-               z * sizeW +
-               w;
+        let index = 0;
+        for ( let i = 0; i < arguments.length && i < this.sizes.length; i++ )
+        {
+            let indexChange = arguments[i];
+            
+            if ( arguments[i] < 0 || arguments[i] >= this.sizes[i] )
+            {
+                throw new Error( "ArrayND out of bounds: parameter #" + i + " is OOB: " + arguments[i] + " is < 0 or >= " + this.sizes[i] );
+            }
+            
+            for ( let sizeIndex = i + 1; sizeIndex < this.sizes.length; sizeIndex++ )
+            {
+                indexChange *= this.sizes[sizeIndex];
+            }
+            
+            index += indexChange;
+        }
+        
+        return index;
     };
     
     this.fill = function( val )
     {
-        for ( let x = 0; x < this.sizeX; x++ )
+        if ( this.sizes.length <= 0 )
         {
-            for ( let y = 0; y < this.sizeY; y++ )
-            {
-                for ( let z = 0; z < this.sizeZ; z++ )
-                {
-                    for ( let w = 0; w < this.sizeW; w++ )
-                    {
-                        this.set( x, y, z, w, val );
-                    }
-                }
-            }
+            return;
+        }
+        
+        let realLength = 1;
+        
+        for ( let sizeIndex = 0; sizeIndex < this.sizes.length; sizeIndex++ )
+        {
+            realLength *= this.sizes[ sizeIndex ];
+        }
+        
+        for ( let i = 0; i < realLength; i++ )
+        {
+            this.arr[i] = val;
         }
     };
     
-    this.get = function( x, y, z, w )
+    //provide coordinates as arguments
+    this.get = function()
     {
-        return this.arr[ this.findIndex( x, y, z, w ) ];
+        let index = this.findIndex.apply( this, arguments );
+        return this.arr[ index ];
     };
     
-    this.set = function( x, y, z, w, val )
+    //provide coordinates as arguments, the last argument is the value to set
+    this.set = function()
     {
-        this.arr[ this.findIndex( x, y, z, w ) ] = val;
+        let index = this.findIndex.apply( this, arguments );
+        this.arr[ index ] = arguments[ arguments.length - 1 ];
     };
     
     if ( defaultFillValue !== undefined )
