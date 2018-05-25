@@ -25,3 +25,7 @@ There are also variables like wind and such that I added in, for whatever reason
 * I never hooked up being able to change any of the variables from the web page. They're just empty fields right now.
 * It would be a lot more fun if there was a training section and a performance section. The existing part is training, then performance would be an obstacle course.
 * Would be good to control how often it changes platforms when you iterate over many frames, 1000 frames isn't enough to try every option.
+
+#### Find it in your browser
+You can load it via Github pages here:
+[https://eli-lumos.github.io/qlearning_jumper/](https://eli-lumos.github.io/qlearning_jumper/)
