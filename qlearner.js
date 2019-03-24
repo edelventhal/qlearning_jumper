@@ -1,6 +1,6 @@
 let QLearner =
 {
-    MAX_JUMP: 50,
+    MAX_JUMP: 100,
     TIME_WEIGHT_DIVISOR: 300, //we divide the number of iterations by this amount and multiply it by the penalty, or its inverse by the reward
     
     epsilon: 0.3, //The chance to explore, basically means ignoring the best value
@@ -20,10 +20,10 @@ let QLearner =
     
     init: function()
     {
-        this.qValues = new ArrayND( Panel.NUM_PLATFORMS_X * 2 + 3,
-                                    Panel.NUM_PLATFORMS_Y * 2 + 3,
-                                    this.MAX_JUMP * 2 + 10,
-                                    this.MAX_JUMP * 2 + 10 );
+        this.qValues = new ArrayND( [ Panel.NUM_PLATFORMS_X * 2 + 15, //NEXT - why do I need to add 15?
+                                      Panel.NUM_PLATFORMS_Y * 2 + 15,
+                                      this.MAX_JUMP * 2 + 10,
+                                      this.MAX_JUMP * 2 + 10 ] );
         //I could avoid this by doing a smarter check later (coerce undefined to 0)
         this.qValues.fill( 0 );
     },
